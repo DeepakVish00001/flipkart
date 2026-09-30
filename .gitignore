@@ -1,0 +1,72 @@
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET build
+bin/
+obj/
+[Bb]uild/
+[Bb]uilds/
+Debug/
+Release/
+
+# Test results
+TestResults/
+*.trx
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# ASP.NET Core
+wwwroot/lib/
+
+# Logs
+*.log
+logs/
+
+# Local configuration / secrets
+appsettings.Development.json
+appsettings.Local.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Angular
+node_modules/
+.angular/
+dist/
+out-tsc/
+coverage/
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Rider / JetBrains
+.idea/
+*.iml
+
+# SQL / local database
+*.mdf
+*.ldf
+
+# Docker
+docker-compose.override.yml
+
+# User-specific files
+*.user
+*.rsuser
