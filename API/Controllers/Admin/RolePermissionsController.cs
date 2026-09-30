@@ -11,8 +11,30 @@ namespace API.Controllers.Admin
     [ApiController]
     public class RolePermissionsController(RoleManager<AppRole> roleManager, StoreContext context) : ControllerBase
     {
+        [HttpGet("permissions")]
+        public async Task<ActionResult> GetPermissions()
+        {
+            var roles = await roleManager.Roles.ToListAsync();
+            var permissions = new List<string>();
+
+            foreach (var role in roles)
+            {
+                var claims = await roleManager.GetClaimsAsync(role);
+
+                permissions.AddRange(
+                    claims.Where(x => x.Type == "Permission")
+                    .Select(x => x.Value)
+                );
+            }
+            var result = permissions
+                        .Distinct()
+                        .OrderBy(x => x)
+                        .ToList();
+            return Ok(result);
+        }
+
         [HttpGet("{roleId}/permissions")]
-        public async Task<ActionResult> GetPermissions(string roleId)
+        public async Task<ActionResult> GetPermission(string roleId)
         {
             var role = await roleManager.FindByIdAsync(roleId);
 
@@ -68,6 +90,58 @@ namespace API.Controllers.Admin
                 message = "Permission created successfully.",
                 role = role.Name,
                 permission
+            });
+        }
+
+
+        [HttpPut("{roleId}/permissions/{permissionId:int}")]
+        public async Task<ActionResult> UpdatePermission(string roleId,
+         int permissionId, [FromBody] string newPermission)
+        {
+            var role = await roleManager.FindByIdAsync(roleId);
+            if (role == null)
+                return NotFound(new { message = "Role not found." });
+
+            var permission = await context.Set<IdentityRoleClaim<string>>()
+                   .FirstOrDefaultAsync(x =>
+                       x.Id == permissionId &&
+                       x.RoleId == roleId &&
+                       x.ClaimType == "Permission");
+            if (permission == null)
+                return NotFound(new
+                {
+                    message = "Permission not found for this role."
+                });
+            if (permission.ClaimValue == newPermission)
+                return BadRequest(new { message = "This permission is already assigned to this role." });
+
+            var alreadyExists = await context.Set<IdentityRoleClaim<string>>()
+                        .AnyAsync(x =>
+                            x.RoleId == roleId &&
+                            x.ClaimType == "Permission" &&
+                            x.ClaimValue == newPermission &&
+                            x.Id != permissionId);
+            if (alreadyExists)
+            {
+                return Conflict(new
+                {
+                    code = "DuplicatePermission",
+                    message = $"Permission '{newPermission}' already exists for this role."
+                });
+            }
+
+            var oldPermission = permission.ClaimValue;
+            permission.ClaimValue = newPermission;
+
+            await context.SaveChangesAsync();
+            return Ok(new
+            {
+                message = "Permission updated successfully.",
+                roleId = role.Id,
+                roleName = role.Name,
+                permissionId = permission.Id,
+                oldPermission,
+                newPermission
             });
         }
 
