@@ -112,9 +112,7 @@ namespace API.Controllers.Admin
                 {
                     message = "Permission not found for this role."
                 });
-            if (permission.ClaimValue == newPermission)
-                return BadRequest(new { message = "This permission is already assigned to this role." });
-
+          
             var alreadyExists = await context.Set<IdentityRoleClaim<string>>()
                         .AnyAsync(x =>
                             x.RoleId == roleId &&
