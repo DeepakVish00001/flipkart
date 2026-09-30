@@ -1,13 +1,15 @@
 using System.Security.Claims;
 using Core.Entities;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.Admin
 {
     [Route("api/admin/roles")]
     [ApiController]
-    public class RolePermissionsController(RoleManager<AppRole> roleManager) : ControllerBase
+    public class RolePermissionsController(RoleManager<AppRole> roleManager, StoreContext context) : ControllerBase
     {
         [HttpGet("{roleId}/permissions")]
         public async Task<ActionResult> GetPermissions(string roleId)
@@ -67,6 +69,42 @@ namespace API.Controllers.Admin
                 role = role.Name,
                 permission
             });
+        }
+
+
+        [HttpDelete("{roleId}/permissions/{permissionId:int}")]
+        public async Task<ActionResult> DeletePermission(string roleId, int permissionId)
+        {
+            var role = await roleManager.FindByIdAsync(roleId);
+            if (role == null)
+                return NotFound(new { message = "Role not found." });
+
+            var permission = await context.Set<IdentityRoleClaim<string>>()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == permissionId &&
+                        x.RoleId == roleId &&
+                        x.ClaimType == "Permission");
+            if (permission == null)
+                return NotFound(new
+                {
+                    message = "Permission not found for this role."
+                });
+
+            context.Set<IdentityRoleClaim<string>>()
+                    .Remove(permission);
+
+            await context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Permission deleted successfully.",
+                roleId = role.Id,
+                roleName = role.Name,
+                permissionId = permission.Id,
+                permission = permission.ClaimValue
+            });
+
+
         }
     }
 }
