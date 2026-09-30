@@ -1,6 +1,8 @@
-﻿namespace API.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 
-public class PermissionRequirement
+namespace API.Authorization;
+
+public class PermissionRequirement(string Permission) : IAuthorizationRequirement
 {
-
+    public string Permission { get; } = Permission;
 }
