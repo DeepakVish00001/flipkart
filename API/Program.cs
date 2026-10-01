@@ -1,5 +1,7 @@
+using API.Authorization;
 using Core.Entities;
 using Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,12 @@ builder.Services.AddDbContext<StoreContext>(options =>
 builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddRoles<AppRole>()
     .AddEntityFrameworkStores<StoreContext>();
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
 var app = builder.Build();
 

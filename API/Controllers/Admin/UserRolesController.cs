@@ -114,22 +114,48 @@ namespace API.Controllers.Admin
         [HttpPost("register")]
         public async Task<ActionResult> Register(RegisterDto registerDto)
         {
-            var user = new AppUser{
-                DisplayName= registerDto.DisplayName,
-                Email=registerDto.Email,
-                UserName=registerDto.Email
+            var user = new AppUser
+            {
+                DisplayName = registerDto.DisplayName,
+                Email = registerDto.Email,
+                UserName = registerDto.Email
             };
 
             var result = await signInManager.UserManager.CreateAsync(user, registerDto.Password);
             if (!result.Succeeded)
             {
-                foreach(var error in result.Errors)
+                foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(error.Code, error.Description);
                 }
                 return ValidationProblem();
             }
-            return Ok();
+
+            //check role exists
+            var role = await roleManager.FindByNameAsync(registerDto.Role);
+            if (role == null)
+            {
+                return BadRequest(new { message = "Selected role does not exist." });
+            }
+            // Assign role
+            var roleResult = await userManager.AddToRoleAsync(
+                user,
+                role.Name!);
+
+            if (!roleResult.Succeeded)
+            {
+                return BadRequest(roleResult.Errors);
+            }
+
+            return Ok(new
+            {
+                message = "User registered successfully.",
+                userId = user.Id,
+                email = user.Email,
+                role = role.Name
+            });
+
+
         }
     }
 }
